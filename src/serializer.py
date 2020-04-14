@@ -5,7 +5,6 @@ serializer
 Utils for serialization
 
 """
-from flask import jsonify
 from flask_marshmallow import Marshmallow
 from flask_sqlalchemy import Pagination
 from marshmallow import fields
@@ -70,4 +69,4 @@ def render(data, schema=None, metadata=None, *args, **kwargs):
         'metadata': metadata,
     }
 
-    return jsonify(result)
+    return result

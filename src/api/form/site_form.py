@@ -13,5 +13,4 @@ class SiteCreateForm(Form):
 class SiteUpdateForm(Form):
     """Site 수정 form"""
     name = fields.StringField('Name')
-    created_by = fields.StringField('User')
     updated_by = fields.StringField('User')

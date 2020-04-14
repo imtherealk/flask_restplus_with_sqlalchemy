@@ -1,5 +1,4 @@
 import sqlalchemy as s
-from flask import make_response
 from flask_restplus import Namespace
 from sqlalchemy.exc import IntegrityError
 
@@ -13,21 +12,19 @@ from serializer import render, FormSchema
 
 site_ns = Namespace('site', description='Site API')
 
-parser = site_ns.parser()
-parser.add_argument('name', type=str, help='site name', location='form')
-parser.add_argument('code', type=str, help='site code', location='form')
-parser.add_argument('created_by', type=str, help='user value', location='form')
-parser.add_argument('updated_by', type=str, help='user value', location='form')
-
 
 @site_ns.route('/')
-class SiteGetAllResource(ComResource):
+class SiteAllResource(ComResource):
     site_service: SiteService = SiteService()
+    parser = site_ns.parser()
+    parser.add_argument('name', type=str, help='site name', location='form')
+    parser.add_argument('code', type=str, help='site code', location='form')
+    parser.add_argument('created_by', type=str, help='argos_admin 또는 사번', location='form')
 
     def get(self):
         """Get All Sites"""
         sites = Site.query.filter_by(is_deleted=False).order_by(Site.created_at).paginate()
-        return make_response(render(data=sites, schema=SiteSchema, many=True), 200)
+        return render(data=sites, schema=SiteSchema, many=True), 200
 
     @site_ns.doc(parser=parser)
     def post(self):
@@ -43,36 +40,38 @@ class SiteGetAllResource(ComResource):
             db.session.add(site)
             try:
                 db.session.commit()
-                return make_response(render(data=site, schema=SiteSchema), 201)
+                return render(data=site, schema=SiteSchema), 201
             except IntegrityError as e:
                 db.session.rollback()
-                return make_response(render(form, FormSchema, e.args), 400)
-        return make_response(render(form, FormSchema), 400)
+                return render(form, FormSchema, e.args), 400
+        return render(form, FormSchema), 400
 
 
 @site_ns.route('/<int:id>')
-class SiteGetResource(ComResource):
+class SiteResource(ComResource):
     site_service: SiteService = SiteService()
+    parser = site_ns.parser()
+    parser.add_argument('name', type=str, help='site name', location='form')
+    parser.add_argument('updated_by', type=str, help='argos_admin 또는 사번', location='form')
 
     def get(self, id):
         """Get A Site by id"""
         site = Site.query.get(id)
 
-        return make_response(render(data=site, schema=SiteSchema), 200)
+        return render(data=site, schema=SiteSchema), 200
 
     @site_ns.doc(parser=parser)
-    def put(self, id):
+    def patch(self, id):
         """Update A Site by id"""
         site = Site.query.get(id)
         form = SiteUpdateForm()
         if form.validate_on_submit():
             site.name = form.name.data
-            site.created_by = form.created_by.data
             site.updated_by = form.updated_by.data
             site.updated_at = s.func.now()
             db.session.commit()
-            return make_response(render(data=site, schema=SiteSchema), 200)
-        return make_response(render(form, FormSchema), 400)
+            return render(data=site, schema=SiteSchema), 200
+        return render(form, FormSchema), 400
 
     def delete(self, id):
         """Delete A Site by id"""
@@ -81,4 +80,4 @@ class SiteGetResource(ComResource):
         site.updated_at = s.func.now()
         site.deleted_at = s.func.now()
         db.session.commit()
-        return make_response(render(None), 200)
+        return render(data=site, schema=SiteSchema), 200
